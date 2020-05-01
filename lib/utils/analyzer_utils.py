@@ -22,12 +22,15 @@ def positions_value_to_df(position_value, enrich_total=True, total_col_name='tot
     return df
 
 
-def annual_return_to_df(annual_return):
+def annual_return_to_df(annual_return, value_col='return'):
     """
     Convert bt.analyzers.AnnualReturn result to pandas DF
     :param annual_return: order_dict
     :return: DF
     """
-    df = pd.DataFrame(dict(year=list(dict(annual_return).keys()), dual_momentum=list(dict(annual_return).values())))
+    df = pd.DataFrame({
+        'year': list(dict(annual_return).keys()),
+        value_col :list(dict(annual_return).values())
+    })
     df = df.set_index('year')
     return df
