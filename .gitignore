@@ -1,0 +1,15 @@
+# python
+*.pyc
+
+# ignore data dir
+data
+
+# ignore notebook checkpoint
+.ipynb_checkpoints
+
+# ignore intelliJ project files
+*.iml
+.idea
+
+# Dummies
+.DS_Store
