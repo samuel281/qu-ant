@@ -1,3 +1,4 @@
+from functools import reduce
 from os  import makedirs
 from os.path import join, dirname, exists
 
@@ -114,3 +115,19 @@ def load_data(symbol, start_date=date(1996, 1, 1), end_date=datetime.today().dat
         save_data(df, symbol)
 
     return df
+
+
+def sync_market_days(df, *dfs):
+    """
+    Get common market days across DataFrames and adjust given DataFrames to have only common market days.
+    This is useful when you want to deal with securities from different stock market.
+    ex. KOSPI + S&P500
+    :param df: pandas df
+    :param dfs: vargs pandas df
+    :return: adjusted df
+    """
+    idxs = map(lambda d: d.index, dfs)
+    common_idx = reduce(lambda pidx, cidx: pidx & cidx, idxs, df.index)
+    return (df.loc[common_idx], *[d.loc[common_idx] for d in dfs])
+
+
