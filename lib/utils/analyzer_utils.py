@@ -1,4 +1,5 @@
 import pandas as pd
+import empyrical as ep
 
 
 def positions_value_to_df(position_value, enrich_total=True, total_col_name='total'):
@@ -34,3 +35,42 @@ def annual_return_to_df(annual_return, value_col='return'):
     })
     df = df.set_index('year')
     return df
+
+
+def get_annual_return_analysis_df(res):
+    if not res.analyzers.annual_return:
+        return None
+
+    return annual_return_to_df(res.analyzers.annual_return.get_analysis())
+
+
+def get_pos_values_analysis_df(res):
+    if not res.analyzers.positions_value:
+        return None
+
+    return positions_value_to_df(res.analyzers.positions_value.get_analysis())
+
+
+def get_default_perf_analysis_df(res, index):
+    if not res.analyzers.sharpe:
+        return None
+
+    if not res.analyzers.draw_down:
+        return None
+
+    pos_val_df = get_pos_values_analysis_df(res)
+    if pos_val_df is None:
+        return None
+    cagr = ep.cagr(pos_val_df['total'].pct_change(), period="daily", annualization=None)
+    return pd.DataFrame(
+        dict(
+            initial_value=pos_val_df['total'][0],
+            final_value=pos_val_df['total'][-1],
+            period_start=pos_val_df.index.min(),
+            period_end=pos_val_df.index.max(),
+            sharpe_ratio=res.analyzers.sharpe.get_analysis()['sharperatio'],
+            mdd=res.analyzers.draw_down.get_analysis()["max"]["drawdown"],
+            cagr=cagr
+        ),
+        index=[index]
+    )
