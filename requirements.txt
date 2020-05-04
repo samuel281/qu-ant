@@ -3,3 +3,4 @@ jupyter==1.0.0
 requests==2.23.0
 pandas-datareader==0.8.1
 empyrical==0.5.3
+investpy==0.9.14

@@ -9,9 +9,12 @@ class FixedPercentageStrategy(StrategyBase):
     Rebalance the portfolio once a month.
     The target percentage of each security is 1.0 / num of security.
     """
+    params=dict(
+        rb_ind=FirstMarketDayOfMonth
+    )
 
     def __init__(self):
-        self.fdom = FirstMarketDayOfMonth(self.data, plot=False)
+        self.rebalance_day = self.params.rb_ind(self.data, plot=False)
         self.first = True
         self.retries = dict()
 
@@ -41,7 +44,7 @@ class FixedPercentageStrategy(StrategyBase):
             self.order_target_value(data, target_value_per_sec * (1 - self.params.buy_margin) )
 
     def next(self):
-        if not self.fdom[0]:
+        if not self.rebalance_day[0]:
             return
 
         self.rebalance()
