@@ -58,19 +58,40 @@ def get_default_perf_analysis_df(res, index):
     if not res.analyzers.draw_down:
         return None
 
+    annual_return_df = get_annual_return_analysis_df(res)
+    best_year = annual_return_df['return'].max()
+    worst_year = annual_return_df['return'].min()
+    mean = annual_return_df['return'].mean()
+    stddev = annual_return_df['return'].std()
+
+
     pos_val_df = get_pos_values_analysis_df(res)
     if pos_val_df is None:
         return None
-    cagr = ep.cagr(pos_val_df['total'].pct_change(), period="daily", annualization=None)
+
+    period_start = pos_val_df.index.min()
+    period_end = pos_val_df.index.max()
+    initial_value = pos_val_df['total'][0]
+    final_value = pos_val_df['total'][-1]
+    period_year = round((period_end - period_start).days / 365)
+    cagr = pow((final_value / initial_value), (1 / period_year)) -1
+    # TODO(Sungwoo): calculate inflation adjusted cagr
+    # inflation = (Ending CPI level - Beginning CPI level) / Beginning CPI level
+    # inflation_adjusted_cagr = (1 + cagr) / (1 + inflation) - 1
+
     return pd.DataFrame(
         dict(
             initial_value=pos_val_df['total'][0],
             final_value=pos_val_df['total'][-1],
             period_start=pos_val_df.index.min(),
             period_end=pos_val_df.index.max(),
+            best_year = best_year,
+            worst_yaer = worst_year,
+            mean = mean,
+            stddev = stddev,
             sharpe_ratio=res.analyzers.sharpe.get_analysis()['sharperatio'],
             mdd=res.analyzers.draw_down.get_analysis()["max"]["drawdown"],
-            cagr=cagr
+            cagr=cagr,
         ),
         index=[index]
     )

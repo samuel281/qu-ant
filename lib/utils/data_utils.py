@@ -71,14 +71,17 @@ def expand_data(df, symbol, start_date, end_date):
     :return: expanded DF
     """
     min_date = df.index.min().date()
-    if min_date < start_date:
-        incr_df = fetch_data(symbol, start_date, min_date - timedelta(days=1))
-        df = pd.concat(incr_df, df)
-
     max_date = df.index.max().date()
-    if max_date> end_date:
-        incr_df = fetch_data(symbol, max_date + timedelta(days=1), end_date)
-        df = pd.concat(df, incr_df)
+
+    if min_date > start_date:
+        print(f'{symbol} {min_date} > {start_date}')
+        incr_df = fetch_data(symbol, start_date, min_date)
+        df = pd.concat([incr_df, df]).drop_duplicates()
+
+    if max_date < end_date:
+        print(f'{symbol} {max_date} < {end_date}')
+        incr_df = fetch_data(symbol, max_date, end_date)
+        df = pd.concat([df, incr_df]).drop_duplicates()
 
     return df
 
@@ -96,13 +99,14 @@ def restore_data(symbol):
     return df
 
 
-def load_data(symbol, start_date=date(1996, 1, 1), end_date=datetime.today().date()):
+def load_data(symbol, start_date=date(1997, 7, 1), end_date=datetime.today().date(), auto_adjust_vals=True):
     """
     Load Yahoo Finance CSV Data as Pandas Dataframe.
     If the price data of the symbol is not stored locally yet, download the data from Yahoo finance as well.
     :param symbol: Yahoo Finance Security symbol (ex. GOOG, 005930.KS, ...)
     :param start_date: start date of the price data
     :param end_date: end date of the price data
+    :param auto_adjust_vals: Whether to adjust open, high, low, close based on the adjust_close automatically.
     :return: Pandas DataFrame
     """
     if not exists(get_data_path(symbol)):
@@ -113,6 +117,17 @@ def load_data(symbol, start_date=date(1996, 1, 1), end_date=datetime.today().dat
     if df.size != exp_df.size:
         df = exp_df
         save_data(df, symbol)
+
+    df = df[(df.index >= pd.to_datetime(start_date)) & (df.index <= pd.to_datetime(end_date))]
+
+    if auto_adjust_vals:
+        adj_factor = df['Adj Close'] / df['Close']
+        df['Adj Open'] = df['Open'] * adj_factor
+        df['Adj High'] = df['High'] * adj_factor
+        df['Adj Low'] = df['Low'] * adj_factor
+
+        df = df[['Adj Open', 'Adj High', 'Adj Low', 'Adj Close', 'Volume']]
+        df = df.rename(columns={'Adj Open': 'Open', 'Adj High': 'High', 'Adj Low': 'Low', 'Adj Close': 'Close'})
 
     return df
 
