@@ -74,12 +74,10 @@ def expand_data(df, symbol, start_date, end_date):
     max_date = df.index.max().date()
 
     if min_date > start_date:
-        print(f'{symbol} {min_date} > {start_date}')
         incr_df = fetch_data(symbol, start_date, min_date)
         df = pd.concat([incr_df, df]).drop_duplicates()
 
-    if max_date < end_date:
-        print(f'{symbol} {max_date} < {end_date}')
+    if max_date < end_date - timedelta(days=2):
         incr_df = fetch_data(symbol, max_date, end_date)
         df = pd.concat([df, incr_df]).drop_duplicates()
 
@@ -109,25 +107,27 @@ def load_data(symbol, start_date=date(1997, 7, 1), end_date=datetime.today().dat
     :param auto_adjust_vals: Whether to adjust open, high, low, close based on the adjust_close automatically.
     :return: Pandas DataFrame
     """
-    if not exists(get_data_path(symbol)):
-        return download_data(symbol, start_date, end_date)
 
-    df = restore_data(symbol)
-    exp_df = expand_data(df, symbol, start_date, end_date)
-    if df.size != exp_df.size:
-        df = exp_df
-        save_data(df, symbol)
+    if not exists(get_data_path(symbol)):
+        df = download_data(symbol, start_date, end_date)
+    else:
+        df = restore_data(symbol)
+        exp_df = expand_data(df, symbol, start_date, end_date)
+        if df.size != exp_df.size:
+            df = exp_df
+            save_data(df, symbol)
 
     df = df[(df.index >= pd.to_datetime(start_date)) & (df.index <= pd.to_datetime(end_date))]
 
     if auto_adjust_vals:
         adj_factor = df['Adj Close'] / df['Close']
-        df['Adj Open'] = df['Open'] * adj_factor
-        df['Adj High'] = df['High'] * adj_factor
-        df['Adj Low'] = df['Low'] * adj_factor
-
-        df = df[['Adj Open', 'Adj High', 'Adj Low', 'Adj Close', 'Volume']]
-        df = df.rename(columns={'Adj Open': 'Open', 'Adj High': 'High', 'Adj Low': 'Low', 'Adj Close': 'Close'})
+        new_df = pd.DataFrame()
+        new_df['Open'] = df['Open'] * adj_factor
+        new_df['High'] = df['High'] * adj_factor
+        new_df['Low'] = df['Low'] * adj_factor
+        new_df['Close'] = df['Adj Close']
+        new_df['Volume'] = df['Volume']
+        df = new_df
 
     return df
 

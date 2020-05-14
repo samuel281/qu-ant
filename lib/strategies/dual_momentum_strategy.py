@@ -72,7 +72,7 @@ class DualmomentumStrategyWithNaiveStopLoss(StrategyBase):
         self.indicators = dict()
         for data in self.datas:
             self.indicators[data] = dict(
-                roc=bt.indicators.ROC(data, period = self.params.momentum_period)
+                roc=bt.indicators.ROC(data, period = self.params.momentum_period),
             )
 
         self.rebanance_day = self.params.rb_ind(self.data)
@@ -100,9 +100,11 @@ class DualmomentumStrategyWithNaiveStopLoss(StrategyBase):
         max_profit = self.params.saving_interest
         max_profit_security = None
         for data in self.datas:
+            self.log(f'{data._name} roc {self.indicators[data].get("roc")[0]}', level=logging.DEBUG)
             if self.indicators[data].get("roc")[0] > max_profit:
                 max_profit = self.indicators[data].get("roc")[0]
                 max_profit_security = data
+                self.log(f'max_profit_security: {max_profit_security}', level=logging.DEBUG)
 
         if max_profit_security == self.cur_security:
             self.log(f'Nothing to do.', level=logging.DEBUG)
