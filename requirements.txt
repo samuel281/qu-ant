@@ -1,6 +1,6 @@
 backtrader[plotting]==1.9.74.123
 jupyter==1.0.0
-requests==2.23.0
+requests==2.31.0
 pandas-datareader==0.8.1
 empyrical==0.5.3
 investpy==0.9.14
